@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Sensor Data</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f4f4f9;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 60%;
+            max-width: 600px;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #e9ecef;
+        }
+
+        #fireButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #dc3545;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #motorButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #c3ea03;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #fireButton:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        #fireButton:hover:not(:disabled) {
+            background-color: #c82333;
+        }
+        @keyframes blinking {
+            0% { background-color: #9ac8a1; }
+            50% { background-color: #22eb51; }
+            100% { background-color: rgb(29, 114, 0); }
+        }
+        .blinking {
+            animation: blinking 1s infinite;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            function fetchSensorData() {
+                $.ajax({
+                    url: '/get_sensor_data', 
+                    method: 'GET',
+                    success: function(data) {
+                        $('#timestamp').text(data.timestamp);
+                        $('#temperature').text(data.temperature);
+                        $('#humidity').text(data.humidity);
+                        $('#is_fire').text(data.is_fire);
+
+                        if (data.is_fire === 1) {
+                            $('#fireButton').prop('disabled', false).addClass('blinking');
+                        } else {
+                            $('#fireButton').prop('disabled', false).removeClass('blinking');
+                        }
+                    },
+                    error: function() {
+                        console.log("Error fetching data");
+                    }
+                });
+            }
+
+            $('#fireButton').on('click', function() {
+                $.ajax({
+                    url: '/turn_off_alert',
+                    method: 'POST',
+                    success: function(response) {
+                        $('#fireButton').prop('disabled', true);
+                        console.log(response.message);
+                    },
+                    error: function() {
+                        console.log("Error turning off alert");
+                    }
+                });
+            });
+
+            $('#motorButton').on('click', function() {
+                $.ajax({
+                    url: '/turn_off_motor',
+                    method: 'POST',
+                    success: function(response) {
+                        console.log(response.message);
+                    },
+                    error: function() {
+                        console.log("Error turning off alert");
+                    }
+                });
+            });
+
+            fetchSensorData();
+            setInterval(fetchSensorData, 2000);
+        });
+    </script>
+</head>
+<body>
+    <h1>IoT Sensor Data</h1>
+    <table>
+        <tr>
+            <th>Timestamp</th>
+            <th>Temperature (°C)</th>
+            <th>Humidity (%)</th>
+        </tr>
+        <tr>
+            <td id="timestamp">{{ sensor_data.timestamp }}</td>
+            <td id="temperature">{{ sensor_data.temperature }}</td>
+            <td id="humidity">{{ sensor_data.humidity }}</td>
+            <td id="is_fire">{{ sensor_data.is_fire }}</td>
+        </tr>
+    </table>
+    <!-- <button id="fireButton">
+        <i class="fas fa-bell"></i>
+    </button> -->
+    <div>
+        <button id="fireButton">
+            <i class="fas fa-bell"></i>
+        </button>
+
+        <button id="motorButton">
+            <i class="fas fa-caret-square-down"></i>
+        </button>
+    </div>
+</body>
+</html>
